@@ -1,0 +1,34 @@
+{
+  "environments": [
+    {
+      "name": "DEV",
+      "datacenter": "ALL",
+      "target": "DEV",
+      "container": "IIS7.5",
+      "version": "1.0"
+    },
+    {
+      "name": "UAT",
+      "datacenter": "ALL",
+      "target": "UAT",
+      "container": "IIS7.5",
+      "version": "1.0"
+    },
+    {
+      "name": "PROD",
+      "datacenter": "ALL",
+      "target": "PROD",
+      "container": "IIS7.5",
+      "version": "1.0"
+    }
+  ],
+  "DEV": {
+    "BaseUrl": "http://172.31.231.108:8080/WordManage/"
+  },
+  "UAT": {
+    "BaseUrl": "https://wordmgrapitest.eastmoney.com/"
+  },
+  "PROD": {
+    "BaseUrl": "https://61.129.249.204/"
+  }
+}
