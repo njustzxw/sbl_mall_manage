@@ -30,3 +30,7 @@ export const getOrderList = params => {
 export const getSearchOrderList = params => {
     return http.fetchGet("manage/order/search.do", params);
 };
+//发货
+export const delivery = params => {
+    return http.fetchGet("manage/order/send_goods.do", params);
+};

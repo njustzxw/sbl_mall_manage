@@ -20,21 +20,70 @@
         </div>
 		 <Modal
 			v-model="modal2"
-			title="Common Modal dialog box title"
+			title="订单详情"
 			width="800"
-			@on-ok="ok"
-			@on-cancel="cancel">
+			@on-ok="ok">
 			<Table border :columns="columns2" :data="orderDetail" height="400"></Table>
+		</Modal>
+        <Modal
+			v-model="modal3"
+			title="收货人信息"
+			width="500"
+			@on-ok="ok">
+            <Form :model="receviePersonDetail" :label-width="100">
+                <FormItem label="收货人：">
+                    <span>{{receviePersonDetail.receiverName}}</span>
+                </FormItem>
+                <FormItem label="收货地址：">
+                    <span>{{receviePersonDetail.receiverProvince+receviePersonDetail.receiverCity+receviePersonDetail.receiverDistrict+receviePersonDetail.receiverAddress}}</span>
+                </FormItem>
+                <FormItem label="联系电话：">
+                    <span>{{receviePersonDetail.receiverPhone}}</span>
+                </FormItem>
+                <FormItem label=" ">
+                    <span>{{receviePersonDetail.receiverMobile}}</span>
+                </FormItem>
+                <FormItem label="邮编：">
+                    <span>{{receviePersonDetail.receiverZip}}</span>
+                </FormItem>
+            </Form>
+		</Modal>
+        <Modal
+			v-model="modal4"
+			title="发货状态修改"
+			width="500"
+			@on-ok="modDelivery">
+            <Form :model="deliveryDetail" :label-width="100">
+                <FormItem label="订单号：">
+                    <span>{{deliveryDetail.orderNo}}</span>
+                </FormItem>
+                <FormItem label="快递方式：">
+                    <Select v-model="deliveryType" placeholder="选择快递方式">
+                        <Option value="1">南京思贝丽</Option>
+                        <Option value="2">百世快递</Option>
+                        <Option value="3">壹米滴答</Option>
+                    </Select>
+                </FormItem>
+                <FormItem :label="deliveryType==1?'联系电话：':'快递单号'">
+                     <Input v-model="receivernum" :placeholder="deliveryType==1?'请输入联系电话：':'请输入快递单号'"></Input>
+                </FormItem>
+            </Form>
 		</Modal>
     </div>
 </template>
 <script>
-import { getOrderList, getSearchOrderList } from "@/api/index";
+import { getOrderList, getSearchOrderList, delivery } from "@/api/index";
 export default {
   data() {
     return {
-		modal2:false,
-		orderDetail:[],
+      modal2: false,
+      modal3: false,
+      modal4: false,
+      deliveryType: 1,
+      receivernum: "",
+      orderDetail: [],
+      receviePersonDetail: {},
+      deliveryDetail: {},
       curType: "",
       status: "",
       typedata: [
@@ -133,7 +182,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.modify(params.index);
+                      this.showReceviePerson(params.index);
                     }
                   }
                 },
@@ -152,7 +201,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.modify(params.index);
+                      this.delivery(params.index);
                     }
                   }
                 },
@@ -161,62 +210,67 @@ export default {
             ]);
           }
         }
-	  ],
-	  columns2:[
-		  {
-				title: '产品图',
-				key: 'image',
-				render: (h, params) => {
-					return h('img',{
-						props:{
-							'src':params.row.productImage 
-						}
-					})
-			}
-			},
-		   {
-				title: '产品名称',
-				key: 'productName',
-				width:300,
-				render: (h, params) => {
-					return h('div', [
-						h('span', {
-							props: {
-								title:this.orderDetail[params.index].productName
-							},
-							style: {
-								margin: '0 5px',
-								display:"inline-block",
-								width:"270px",
-								overflow:"hidden",
-								lineHeight:"40px;"
-							},
-							on: {
-								click: () => {
-									this.show(params.index)
-								}
-							}
-						}, params.row.productName),
-					]);
-				}
-			},
-			{
-				title: '产品Id',
-				key: 'productId'
-			},
-			{
-				title: '数量',
-				key: 'quantity'
-			},
-			{
-				title: '单价',
-				key: 'currentUnitPrice'
-			},
-			{
-				title: '总价',
-				key: 'totalPrice'
-			}
-	  ],
+      ],
+      columns2: [
+        {
+          title: "产品图",
+          key: "image",
+          render: (h, params) => {
+            return h("img", {
+              attrs: {
+                src: params.row.productImage,
+                width: "50px"
+              }
+            });
+          }
+        },
+        {
+          title: "产品名称",
+          key: "productName",
+          width: 300,
+          render: (h, params) => {
+            return h("div", [
+              h(
+                "span",
+                {
+                  attrs: {
+                    title: params.row.productName
+                  },
+                  style: {
+                    margin: "0 5px",
+                    display: "inline-block",
+                    width: "270px",
+                    overflow: "hidden",
+                    lineHeight: "40px;"
+                  },
+                  on: {
+                    click: () => {
+                      this.show(params.index);
+                    }
+                  }
+                },
+                params.row.productName
+              )
+            ]);
+          }
+        },
+        {
+          title: "产品Id",
+          key: "productId"
+        },
+        {
+          title: "数量",
+          key: "quantity"
+        },
+        {
+          title: "单价",
+          key: "currentUnitPrice"
+        },
+        {
+          title: "总价",
+          key: "totalPrice"
+        }
+      ],
       pageindex: 1,
       pageSize: 10,
       total: 0,
@@ -234,7 +288,6 @@ export default {
       };
       getOrderList(params).then(res => {
         this.tableList = res.data.list;
-        console.log(this.tableList.list);
         this.total = res.data.total;
       });
     },
@@ -253,7 +306,6 @@ export default {
       };
       getSearchOrderList(params).then(res => {
         this.tableList = res.data.list;
-        console.log(this.tableList.list);
         this.total = res.data.total;
       });
     },
@@ -265,11 +317,36 @@ export default {
     pagesizechange(size) {
       this.pageSize = size;
       this._getOrderList();
-	},
-	showOrderdetail(index){
-		this.modal2 = true;
-		this.orderDetail = this.tableList[index].orderItemVoList
-	},
+    },
+    showOrderdetail(index) {
+      this.modal2 = true;
+      this.orderDetail = this.tableList[index].orderItemVoList;
+    },
+    showReceviePerson(index) {
+      this.modal3 = true;
+      this.receviePersonDetail = this.tableList[index].shippingVo;
+    },
+    delivery(index) {
+      this.modal4 = true;
+      this.deliveryType = 1;
+      this.receivernum = "";
+      this.deliveryDetail = this.tableList[index];
+    },
+    modDelivery() {
+      var params = {
+        orderNo: this.deliveryDetail.orderNo,
+        type: this.deliveryType,
+        num: this.receivernum
+      };
+      delivery(params).then(res => {
+        if (res.data == "发货成功") {
+          this.$Message.success(res.data);
+          this._getOrderList();
+        } else {
+          this.$Message.error(res.msg);
+        }
+      });
+    },
     ok() {}
   }
 };
